@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Captioner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        input, select {
+            padding: 5px;
+        }
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Video Captioner</h1>
+    <form id="captionForm">
+        <input type="file" name="video" accept="video/*" required>
+        <input type="number" name="font_size" min="10" max="100" value="40" required>
+        <select name="font_name" required>
+            <option value="arial">Arial</option>
+            <option value="times">Times New Roman</option>
+            <option value="verdana">Verdana</option>
+        </select>
+        <input type="color" name="font_color" value="#ffffff" required>
+        <button type="submit">Process Video</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('captionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            var formData = new FormData(this);
+            var colorValue = formData.get('font_color');
+            var rgb = parseInt(colorValue.slice(1), 16);
+            var r = (rgb >> 16) & 255;
+            var g = (rgb >> 8) & 255;
+            var b = rgb & 255;
+            formData.set('font_color', `${r},${g},${b}`);
+
+            fetch('/process', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('result').innerHTML = `<p>Error: ${data.error}</p>`;
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <p>Video processed successfully!</p>
+                        <video controls src="${data.output_url}"></video>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = '<p>An error occurred while processing the video.</p>';
+            });
+        });
+    </script>
+</body>
+</html>
