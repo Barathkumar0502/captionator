@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captionator</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --text-color: #ffffff;
+            --header-bg: #2d2d2d;
+            --sidebar-bg: #252525;
+            --timeline-bg: #333333;
+            --clip-bg: #4a4a4a;
+            --accent-color: #00a8ff;
+            --button-bg: #3a3a3a;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        header {
+            background-color: var(--header-bg);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 40px;
+        }
+        .logo {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        .left-sidebar, .right-sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .center-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-color);
+        }
+        .video-preview {
+            aspect-ratio: 16 / 9;
+            background-color: #000;
+            margin: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            position: relative;
+        }
+        .video-controls {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            background-color: rgba(0,0,0,0.5);
+            padding: 5px;
+            border-radius: 20px;
+        }
+        .timeline-area {
+            flex: 1;
+            background-color: var(--timeline-bg);
+            display: flex;
+            flex-direction: column;
+            min-height: 200px;
+        }
+        .timeline-tools {
+            padding: 10px;
+            background-color: var(--header-bg);
+            display: flex;
+            justify-content: center;
+        }
+        .timeline {
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+        .timeline-header {
+            height: 30px;
+            background-color: var(--header-bg);
+            border-bottom: 1px solid #444;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+        }
+        .track {
+            height: 50px;
+            background-color: rgba(255,255,255,0.05);
+            margin-bottom: 1px;
+            position: relative;
+        }
+        .clip {
+            position: absolute;
+            height: 48px;
+            background-color: var(--clip-bg);
+            border: 1px solid var(--accent-color);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5px;
+            cursor: move;
+            user-select: none;
+        }
+        .clip-resize {
+            width: 10px;
+            height: 100%;
+            position: absolute;
+            right: 0;
+            top: 0;
+            cursor: e-resize;
+        }
+        .clip-delete {
+            cursor: pointer;
+            color: #ff4444;
+        }
+        .tab-header {
+            display: flex;
+            background-color: var(--header-bg);
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            border-bottom-color: var(--accent-color);
+        }
+        .tab-content {
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        button {
+            background-color: var(--button-bg);
+            border: none;
+            color: var(--text-color);
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        button:hover {
+            background-color: var(--accent-color);
+        }
+        .media-item {
+            background-color: var(--clip-bg);
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .media-item:hover {
+            background-color: var(--accent-color);
+        }
+        .slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .color-picker {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+        .material-icons {
+            font-size: 18px;
+            margin-right: 5px;
+        }
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 20px;
+            width: 90%;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .drop-zone.dragover {
+            background-color: #0056b3;
+            color: white;
+        }
+        .media-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .media-item:hover {
+            background-color: #444;
+        }
+        .timeline .track {
+            min-height: 50px;
+            border-bottom: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <div class="logo">Captionator</div>
+            <button><span class="material-icons">file_upload</span> Export</button>
+        </header>
+        <div class="main-content">
+            <div class="left-sidebar">
+                <div class="tab-header">
+                    <div class="tab active" data-tab="media">Media</div>
+                    <div class="tab" data-tab="audio">Audio</div>
+                    <div class="tab" data-tab="effects">Effects</div>
+                    <div class="tab" data-tab="text">Text</div>
+                </div>
+                <div class="tab-content" id="mediaTab">
+                    <div class="drop-zone" id="videoDropZone">
+                        <p>Drag & Drop video here or</p>
+                        <input type="file" id="videoFileInput" accept="video/*" style="display: none;">
+                        <button onclick="document.getElementById('videoFileInput').click()">Select Video File</button>
+                    </div>
+                    <div id="videoList"></div>
+                </div>
+                <div class="tab-content" id="audioTab" style="display: none;">
+                    <div class="drop-zone" id="audioDropZone">
+                        <p>Drag & Drop audio here or</p>
+                        <input type="file" id="audioFileInput" accept="audio/*" style="display: none;">
+                        <button onclick="document.getElementById('audioFileInput').click()">Select Audio File</button>
+                    </div>
+                    <div id="audioList"></div>
+                </div>
+                <div class="tab-content" id="effectsTab" style="display: none;">
+                    <!-- Add effects content here -->
+                </div>
+                <div class="tab-content" id="textTab" style="display: none;">
+                    <!-- Add text content here -->
+                </div>
+            </div>
+            <div class="center-area">
+                <div class="video-preview">
+                    Video Preview
+                    <div class="video-controls">
+                        <button><span class="material-icons">skip_previous</span></button>
+                        <button><span class="material-icons">play_arrow</span></button>
+                        <button><span class="material-icons">skip_next</span></button>
+                    </div>
+                </div>
+                <div class="timeline-area">
+                    <div class="timeline-tools">
+                        <button><span class="material-icons">content_cut</span> Cut</button>
+                        <button><span class="material-icons">call_split</span> Split</button>
+                        <button><span class="material-icons">content_copy</span> Copy</button>
+                        <button><span class="material-icons">delete</span> Delete</button>
+                        <button><span class="material-icons">speed</span> Speed</button>
+                        <button><span class="material-icons">volume_up</span> Volume</button>
+                    </div>
+                    <div class="timeline">
+                        <div class="track" id="videoTrack"></div>
+                        <div class="track" id="audioTrack"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="right-sidebar">
+                <div class="tab-header">
+                    <div class="tab active">Canvas</div>
+                    <div class="tab">Audio</div>
+                </div>
+                <div class="tab-content">
+                    <h3>Adjust</h3>
+                    <label>Brightness</label>
+                    <input type="range" class="slider">
+                    <label>Contrast</label>
+                    <input type="range" class="slider">
+                    <label>Saturation</label>
+                    <input type="range" class="slider">
+                    <h3>Filter</h3>
+                    <button>Filter 1</button>
+                    <button>Filter 2</button>
+                    <h3>Color</h3>
+                    <input type="color" class="color-picker">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/interact.js/1.10.11/interact.min.js"></script>
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+                document.getElementById(this.dataset.tab + 'Tab').style.display = 'block';
+            });
+        });
+
+        // File upload handling
+        function setupDropZone(dropZoneId, fileInputId, fileListId, acceptedTypes) {
+            const dropZone = document.getElementById(dropZoneId);
+            const fileInput = document.getElementById(fileInputId);
+            const fileList = document.getElementById(fileListId);
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+
+            dropZone.addEventListener('drop', handleDrop, false);
+            fileInput.addEventListener('change', handleFiles, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles({ target: { files: files } });
+            }
+
+            function handleFiles(e) {
+                const files = e.target.files;
+                [...files].forEach(file => {
+                    if (acceptedTypes.includes(file.type.split('/')[0])) {
+                        uploadFile(file, fileListId);
+                    } else {
+                        console.error('File type not allowed:', file.type);
+                    }
+                });
+            }
+        }
+
+        setupDropZone('videoDropZone', 'videoFileInput', 'videoList', ['video']);
+        setupDropZone('audioDropZone', 'audioFileInput', 'audioList', ['audio']);
+
+        function uploadFile(file, listId) {
+            let formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    addMediaItem(data.filename, listId);
+                } else {
+                    console.error('Upload failed:', data.error);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function addMediaItem(filename, listId) {
+            const mediaItem = document.createElement('div');
+            mediaItem.className = 'media-item';
+            mediaItem.draggable = true;
+            mediaItem.innerHTML = `<span class="material-icons">${listId === 'videoList' ? 'movie' : 'audiotrack'}</span> ${filename}`;
+            mediaItem.addEventListener('dragstart', handleDragStart);
+            document.getElementById(listId).appendChild(mediaItem);
+        }
+
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.textContent);
+            e.dataTransfer.setData('mediaType', e.target.querySelector('.material-icons').textContent === 'movie' ? 'video' : 'audio');
+        }
+
+        // Timeline handling
+        const videoTrack = document.getElementById('videoTrack');
+        const audioTrack = document.getElementById('audioTrack');
+
+        [videoTrack, audioTrack].forEach(track => {
+            track.addEventListener('dragover', e => e.preventDefault());
+            track.addEventListener('drop', handleTrackDrop);
+        });
+
+        function handleTrackDrop(e) {
+            e.preventDefault();
+            const mediaType = e.dataTransfer.getData('mediaType');
+            const filename = e.dataTransfer.getData('text');
+            if ((mediaType === 'video' && e.target === videoTrack) || 
+                (mediaType === 'audio' && e.target === audioTrack)) {
+                const clip = createClip(filename, e.offsetX);
+                e.target.appendChild(clip);
+                initializeClipInteractions(clip);
+            }
+        }
+
+        function createClip(filename, leftOffset) {
+            const clip = document.createElement('div');
+            clip.className = 'clip';
+            clip.innerHTML = `
+                <span>${filename}</span>
+                <span class="clip-delete">×</span>
+                <div class="clip-resize"></div>
+            `;
+            clip.style.left = `${leftOffset}px`;
+            clip.style.width = '150px';  // Default width, you might want to adjust this
+            return clip;
+        }
+
+        function initializeClipInteractions(clip) {
+            // Make the clip draggable
+            interact(clip)
+                .draggable({
+                    inertia: true,
+                    modifiers: [
+                        interact.modifiers.restrictRect({
+                            restriction: 'parent',
+                            endOnly: true
+                        })
+                    ],
+                    autoScroll: true,
+                    listeners: {
+                        move: dragMoveListener,
+                    }
+                })
+                .resizable({
+                    edges: { right: true },
+                    listeners: {
+                        move: resizeMoveListener
+                    },
+                    modifiers: [
+                        interact.modifiers.restrictEdges({
+                            outer: 'parent',
+                            endOnly: true,
+                        }),
+                    ],
+                })
+
+            // Add delete functionality
+            clip.querySelector('.clip-delete').addEventListener('click', function() {
+                clip.remove();
+            });
+        }
+
+        function dragMoveListener(event) {
+            var target = event.target
+            var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx
+            var y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy
+
+            target.style.transform = 'translate(' + x + 'px, ' + y + 'px)'
+
+            target.setAttribute('data-x', x)
+            target.setAttribute('data-y', y)
+        }
+
+        function resizeMoveListener(event) {
+            var target = event.target
+            var x = (parseFloat(target.getAttribute('data-x')) || 0)
+            var y = (parseFloat(target.getAttribute('data-y')) || 0)
+
+            // update the element's style
+            target.style.width = event.rect.width + 'px'
+            target.style.height = event.rect.height + 'px'
+
+            // translate when resizing from top or left edges
+            x += event.deltaRect.left
+            y += event.deltaRect.top
+
+            target.style.transform = 'translate(' + x + 'px,' + y + 'px)'
+
+            target.setAttribute('data-x', x)
+            target.setAttribute('data-y', y)
+        }
+
+        // Initialize existing clips
+        document.querySelectorAll('.clip').forEach(initializeClipInteractions);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight(e) {
+            this.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            this.classList.remove('dragover');
+        }
+    </script>
+</body>
+</html>
